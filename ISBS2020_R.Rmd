@@ -1,0 +1,566 @@
+---
+title: "ISBS2020"
+author: "Casey Wiens"
+date: "January 30, 2020"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# initialize libraries
+library(data.table)
+library(readxl)
+library(dplyr)
+library(ggplot2)
+library(DBI)
+library(RSQLite)
+library(gridExtra)
+source("C:\\Users\\cwiens\\Documents\\R\\Rallfun-v36")
+```
+
+```{r, include=FALSE}
+# identify parent folder with all athlete results folder
+folderCurrent = "C:\\Users\\cwiens\\Box Sync\\USC - Biomechanics Lab\\Conferences\\ISBS2020\\"
+# set working directory
+setwd(folderCurrent)
+
+# create connection and load tables
+conISBS <- dbConnect(SQLite(), "C:\\Users\\cwiens\\Box Sync\\USC - Biomechanics Lab\\Basketball\\ISBS2020_Database.sqlite")
+shot.data = dbReadTable(conISBS, 'shot.data')
+dbDisconnect(conISBS)
+
+# create athlete variable
+ath = sort(unique(shot.data$Athlete_ID))
+# set proper order of shot distance
+shot.data$shotdistance <- factor(shot.data$shotdistance,
+                                 levels = c("close", "medium", "long"))
+```
+
+
+## Ball Resultant Velocity
+
+```{r, echo=FALSE}
+shot.data$ball_velocity_release = (shot.data$ball_velocity_release_x^2 + shot.data$ball_velocity_release_y^2)^0.5
+
+writeLines("Percentile bootstrap using medians")
+# pairwise comparisons of the 3 groups using percentile bootrap on medians
+mc1 = medpb(fac2list(shot.data$ball_velocity_release,
+                     shot.data$shotdistance))
+mc1
+writeLines("Using Benjamini-Hochberg to adjust p-values")
+# adjust p-values based on Benjamini-Hochberg
+p.adjust(mc1$output[,3],
+         method = "BH")
+
+writeLines("Within-individiual: Multiple comparisons using medians on difference scores")
+# initialize variable
+wsResult = matrix(nrow = 7, ncol = 3)
+# step through number of subjects
+for(i in 1:length(unique(shot.data$Athlete_ID))){
+    # sign test
+    signResult = sintv2mcp(fac2list(shot.data$ball_velocity_release[shot.data$Athlete_ID == ath[i]],
+                     shot.data$shotdistance[shot.data$Athlete_ID == ath[i]]))
+    wsResult[i,] = signResult[["output"]][,6]
+}
+# view data
+wsResult
+# adjust p values based on Benjamini-Hochberg's method
+p.adjust(wsResult, method = "BH")
+```
+
+```{r, echo=FALSE}
+# plot data
+ggplot(shot.data,
+       aes(x = Athlete_ID,
+           y = ball_velocity_release,
+           group = shotdistance,
+           color = shotdistance)) +
+  geom_point(position = position_dodge(width = 0.5)) +
+  scale_color_discrete(name = "Shot Distance") +
+  xlab("Participant") +
+  ylab("Resultant Velocity (m/s)") +
+  ggtitle("Ball Release Resultant Velocity") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+## Ball Vertical Velocity
+
+```{r, echo=FALSE}
+writeLines("Percentile bootstrap using medians")
+# pairwise comparisons of the 3 groups using percentile bootrap on medians
+mc1 = medpb(fac2list(shot.data$ball_velocity_release_y,
+                     shot.data$shotdistance))
+mc1
+writeLines("Using Benjamini-Hochberg to adjust p-values")
+# adjust p-values based on Benjamini-Hochberg
+p.adjust(mc1$output[,3],
+         method = "BH")
+
+writeLines("Within-individiual: Multiple comparisons using medians on difference scores")
+# initialize variable
+wsResult = matrix(nrow = 7, ncol = 3)
+# step through number of subjects
+for(i in 1:length(unique(shot.data$Athlete_ID))){
+    # sign test
+    signResult = sintv2mcp(fac2list(shot.data$ball_velocity_release_y[shot.data$Athlete_ID == ath[i]],
+                     shot.data$shotdistance[shot.data$Athlete_ID == ath[i]]))
+    wsResult[i,] = signResult[["output"]][,6]
+}
+# view data
+wsResult
+# adjust p values based on Benjamini-Hochberg's method
+p.adjust(wsResult, method = "BH")
+```
+
+```{r, echo=FALSE}
+# plot data
+ggplot(shot.data,
+       aes(x = Athlete_ID,
+           y = ball_velocity_release_y,
+           group = shotdistance,
+           color = shotdistance)) +
+  geom_point(position = position_dodge(width = 0.5)) +
+  scale_color_discrete(name = "Shot Distance") +
+  xlab("Participant") +
+  ylab("Vertical Velocity (m/s)") +
+  ggtitle("Ball Release Vertical Velocity") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+## Ball Horizontal Velocity
+
+```{r, echo=FALSE}
+writeLines("Percentile bootstrap using medians")
+# pairwise comparisons of the 3 groups using percentile bootrap on medians
+mc1 = medpb(fac2list(shot.data$ball_velocity_release_x,
+                     shot.data$shotdistance))
+mc1
+writeLines("Using Benjamini-Hochberg to adjust p-values")
+# adjust p-values based on Benjamini-Hochberg
+p.adjust(mc1$output[,3],
+         method = "BH")
+
+writeLines("Within-individiual: Multiple comparisons using medians on difference scores")
+# initialize variable
+wsResult = matrix(nrow = 7, ncol = 3)
+# step through number of subjects
+for(i in 1:length(unique(shot.data$Athlete_ID))){
+    # sign test
+    signResult = sintv2mcp(fac2list(shot.data$ball_velocity_release_x[shot.data$Athlete_ID == ath[i]],
+                     shot.data$shotdistance[shot.data$Athlete_ID == ath[i]]))
+    wsResult[i,] = signResult[["output"]][,6]
+}
+# view data
+wsResult
+# adjust p values based on Benjamini-Hochberg's method
+p.adjust(wsResult, method = "BH")
+```
+
+```{r, echo=FALSE}
+# plot data
+ggplot(shot.data,
+       aes(x = Athlete_ID,
+           y = ball_velocity_release_x,
+           group = shotdistance,
+           color = shotdistance)) +
+  geom_point(position = position_dodge(width = 0.5)) +
+  scale_color_discrete(name = "Shot Distance") +
+  xlab("Participant") +
+  ylab("Horizontal Velocity (m/s)") +
+  ggtitle("Ball Release Horizontal Velocity") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+## CM Velocity at Release
+
+```{r, echo=FALSE}
+writeLines("Percentile bootstrap using medians")
+# pairwise comparisons of the 3 groups using percentile bootrap on medians
+mc1 = medpb(fac2list(shot.data$velD_Z_release,
+                     shot.data$shotdistance))
+mc1
+writeLines("Using Benjamini-Hochberg to adjust p-values")
+# adjust p-values based on Benjamini-Hochberg
+p.adjust(mc1$output[,3],
+         method = "BH")
+
+writeLines("Within-individiual: Multiple comparisons using medians on difference scores")
+# initialize variable
+wsResult = matrix(nrow = 7, ncol = 3)
+# step through number of subjects
+for(i in 1:length(unique(shot.data$Athlete_ID))){
+    # sign test
+    signResult = sintv2mcp(fac2list(shot.data$velD_Z_release[shot.data$Athlete_ID == ath[i]],
+                     shot.data$shotdistance[shot.data$Athlete_ID == ath[i]]))
+    wsResult[i,] = signResult[["output"]][,6]
+}
+# view data
+wsResult
+# adjust p values based on Benjamini-Hochberg's method
+p.adjust(wsResult, method = "BH")
+```
+
+```{r, echo=FALSE}
+# plot horizontal data
+ggplot(shot.data,
+       aes(x = as.factor(Athlete_ID),
+           y = velD_Z_release,
+           group = shotdistance,
+           color = shotdistance)) +
+  geom_point(position = position_dodge(width = 0.5)) +
+  scale_color_discrete(name = "Shot Distance") +
+  xlab("Participant") +
+  ylab("CM Vertical Velocity at Release (m/s)") + 
+  ggtitle("CM Vertical Velocity at Release per Participant") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r, echo=FALSE}
+writeLines("Percentile bootstrap using medians")
+# pairwise comparisons of the 3 groups using percentile bootrap on medians
+mc1 = medpb(fac2list(shot.data$velD_Y_release,
+                     shot.data$shotdistance))
+mc1
+writeLines("Using Benjamini-Hochberg to adjust p-values")
+# adjust p-values based on Benjamini-Hochberg
+p.adjust(mc1$output[,3],
+         method = "BH")
+
+writeLines("Within-individiual: Multiple comparisons using medians on difference scores")
+# initialize variable
+wsResult = matrix(nrow = 7, ncol = 3)
+# step through number of subjects
+for(i in 1:length(unique(shot.data$Athlete_ID))){
+    # sign test
+    signResult = sintv2mcp(fac2list(shot.data$velD_Y_release[shot.data$Athlete_ID == ath[i]],
+                     shot.data$shotdistance[shot.data$Athlete_ID == ath[i]]))
+    wsResult[i,] = signResult[["output"]][,6]
+}
+# view data
+wsResult
+# adjust p values based on Benjamini-Hochberg's method
+p.adjust(wsResult, method = "BH")
+```
+
+```{r echo=FALSE}
+# plot horizontal data
+ggplot(shot.data,
+       aes(x = as.factor(Athlete_ID),
+           y = velD_Y_release,
+           group = shotdistance,
+           color = shotdistance)) +
+  geom_point(position = position_dodge(width = 0.5)) +
+  scale_color_discrete(name = "Shot Distance") +
+  xlab("Participant") +
+  ylab("CM Horizontal Velocity at Release (m/s)") + 
+  ggtitle("CM Horizontal Velocity at Release per Participant") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+## Percentage of Ball Velocity Attributed to CM
+
+```{r, echo=FALSE}
+# plot data
+ggplot(shot.data,
+       aes(x = velD_Z_release,
+           y = velD_Z_release / ball_velocity_release_y * 100,
+           color = shotdistance)) +
+  geom_point(shape = 21) +
+  geom_point(aes(x = velD_Y_release,
+                 y = velD_Y_release / ball_velocity_release_x * 100,
+           color = shotdistance),
+           shape = 16) +
+  xlab("CM Velocity at Release (m/s)") +
+  ylab("Contribution of CM Velocity\nto Ball Velocity at Release (%)") +
+  scale_color_discrete(name="Shot Distance") +
+  ylim(-5, 35) +
+  geom_vline(xintercept = 0) +
+  geom_hline(yintercept = 0) +
+  ggtitle("Contribution of CM Velocity\nto Ball Velocity at Release") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text = element_text(size = 14),
+        axis.title = element_text(size = 14),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 14))
+ggsave('Figures\\PercentfromCM.jpeg')
+```
+
+
+## Net Vertical Impulse Generated during Shot Prep
+
+```{r, echo=FALSE}
+writeLines("Percentile bootstrap using medians")
+# pairwise comparisons of the 3 groups using percentile bootrap on medians
+mc1 = medpb(fac2list(shot.data$imp_Z,
+                     shot.data$shotdistance))
+mc1
+writeLines("Using Benjamini-Hochberg to adjust p-values")
+# adjust p-values based on Benjamini-Hochberg
+p.adjust(mc1$output[,3],
+         method = "BH")
+
+writeLines("Within-individiual: Multiple comparisons using medians on difference scores")
+# initialize variable
+wsResult = matrix(nrow = 7, ncol = 3)
+# step through number of subjects
+for(i in 1:length(unique(shot.data$Athlete_ID))){
+    # sign test
+    signResult = sintv2mcp(fac2list(shot.data$imp_Z[shot.data$Athlete_ID == ath[i]],
+                     shot.data$shotdistance[shot.data$Athlete_ID == ath[i]]))
+    wsResult[i,] = signResult[["output"]][,6]
+}
+# view data
+wsResult
+# adjust p values based on Benjamini-Hochberg's method
+p.adjust(wsResult, method = "BH")
+```
+
+```{r, echo=FALSE}
+# plot data
+ggplot(shot.data,
+       aes(x = Athlete_ID,
+           y = imp_Z,
+           group = shotdistance,
+           color = shotdistance)) +
+  geom_point(position = position_dodge(width = 0.5)) +
+  scale_color_discrete(name = "Shot Distance") +
+  xlab("Participant") +
+  ylab("Net Impulse (Ns)") + 
+  ggtitle("Impulse Generated during Shot Prep") + 
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+## End of Impulse to Time of Release
+
+```{r, echo=FALSE}
+writeLines("Percentile bootstrap using medians")
+# pairwise comparisons of the 3 groups using percentile bootrap on medians
+mc1 = medpb(fac2list(shot.data$time_endimpulse2release,
+                     shot.data$shotdistance))
+mc1
+writeLines("Using Benjamini-Hochberg to adjust p-values")
+# adjust p-values based on Benjamini-Hochberg
+p.adjust(mc1$output[,3],
+         method = "BH")
+
+writeLines("Within-individiual: Multiple comparisons using medians on difference scores")
+# initialize variable
+wsResult = matrix(nrow = 7, ncol = 3)
+# step through number of subjects
+for(i in 1:length(unique(shot.data$Athlete_ID))){
+    # sign test
+    signResult = sintv2mcp(fac2list(shot.data$time_endimpulse2release[shot.data$Athlete_ID == ath[i]],
+                     shot.data$shotdistance[shot.data$Athlete_ID == ath[i]]))
+    wsResult[i,] = signResult[["output"]][,6]
+}
+# view data
+wsResult
+# adjust p values based on Benjamini-Hochberg's method
+p.adjust(wsResult, method = "BH")
+```
+
+```{r, echo=FALSE}
+#plot data
+ggplot(shot.data,
+       aes(x = Athlete_ID, 
+           y = time_endimpulse2release,
+           group = shotdistance,
+           color = shotdistance)) +
+  geom_point(position = position_dodge(width=0.5)) +
+  scale_color_discrete(name = "Shot Distance") +
+  xlab("Participant") +
+  ylab("Time from End of Impulse Generation\nto Ball Release (s)") +
+  ggtitle("Time to Release") + 
+  geom_hline(yintercept = 0) +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+## Time of Release to Center of Mass Apex
+
+```{r, echo=FALSE}
+# add time to center of mass apex
+shot.data$time_release2cmapex = (0 - shot.data$velD_Z_release) / -9.81
+shot.data$time_halfjump = (0 - shot.data$velD_Z) / -9.81
+
+writeLines("Percentile bootstrap using medians")
+# pairwise comparisons of the 3 groups using percentile bootrap on medians
+mc1 = medpb(fac2list(shot.data$time_release2cmapex,
+                     shot.data$shotdistance))
+mc1
+writeLines("Using Benjamini-Hochberg to adjust p-values")
+# adjust p-values based on Benjamini-Hochberg
+p.adjust(mc1$output[,3],
+         method = "BH")
+
+writeLines("Within-individiual: Multiple comparisons using medians on difference scores")
+# initialize variable
+wsResult = matrix(nrow = 7, ncol = 3)
+# step through number of subjects
+for(i in 1:length(unique(shot.data$Athlete_ID))){
+    # sign test
+    signResult = sintv2mcp(fac2list(shot.data$time_release2cmapex[shot.data$Athlete_ID == ath[i]],
+                     shot.data$shotdistance[shot.data$Athlete_ID == ath[i]]))
+    wsResult[i,] = signResult[["output"]][,6]
+}
+# view data
+wsResult
+# adjust p values based on Benjamini-Hochberg's method
+p.adjust(wsResult, method = "BH")
+```
+
+```{r, echo=FALSE}
+#plot data
+ggplot(shot.data,
+       aes(x = Athlete_ID, 
+           y = -time_release2cmapex,
+           group = shotdistance,
+           color = shotdistance)) +
+  geom_point(position = position_dodge(width=0.5)) +
+  scale_color_discrete(name = "Shot Distance") +
+  xlab("Participant") +
+  ylab("Time from Release\nto CM Apex (s)") +
+  ggtitle("Time to CM Apex") + 
+  geom_hline(yintercept = 0) +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r, echo=FALSE}
+#plot data
+ggplot(shot.data,
+       aes(x = -time_release2cmapex, 
+           y = velD_Z_release / ball_velocity_release_y * 100,
+           group = shotdistance,
+           color = shotdistance)) +
+  geom_point() +
+  scale_color_discrete(name = "Shot Distance") +
+  xlim(-0.25,0.025) +
+  ylim(-5,35) +
+  xlab("Time of Ball Release from CM Apex (s)") +
+  ylab("Contribution of CM Vv to Ball Vv at Release (%)") +
+  ggtitle("Time to CM Apex") + 
+  geom_vline(xintercept = 0) +
+  geom_hline(yintercept = 0) +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text = element_text(size = 14),
+        axis.title = element_text(size = 14),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 14))
+# save plot
+ggsave('Figures\\time2apex.jpeg')
+```
+
+
+## Height of Release - Relative to Average Close Release Height
+
+```{r, echo=FALSE}
+writeLines("Percentile bootstrap using medians")
+# pairwise comparisons of the 3 groups using percentile bootrap on medians
+mc1 = medpb(fac2list(shot.data$meanRH_c - shot.data$dist2rim_y,
+                     shot.data$shotdistance))
+mc1
+writeLines("Using Benjamini-Hochberg to adjust p-values")
+# adjust p-values based on Benjamini-Hochberg
+p.adjust(mc1$output[,3],
+         method = "BH")
+
+writeLines("Within-individiual: Multiple comparisons using medians on difference scores")
+# initialize variable
+wsResult = matrix(nrow = 7, ncol = 3)
+# step through number of subjects
+for(i in 1:length(unique(shot.data$Athlete_ID))){
+    # sign test
+    signResult = sintv2mcp(fac2list(shot.data$meanRH_c[shot.data$Athlete_ID == ath[i]] -
+                                      shot.data$dist2rim_y[shot.data$Athlete_ID == ath[i]],
+                     shot.data$shotdistance[shot.data$Athlete_ID == ath[i]]))
+    wsResult[i,] = signResult[["output"]][,6]
+}
+# view data
+wsResult
+# adjust p values based on Benjamini-Hochberg's method
+p.adjust(wsResult, method = "BH")
+```
+
+```{r, echo=FALSE}
+# plot data
+ggplot(shot.data,
+       aes(x = Athlete_ID,
+           y = (meanRH_c - dist2rim_y),
+           group = shotdistance,
+           color = shotdistance)) +
+  geom_point(position = position_dodge(width = 0.5)) +
+  scale_color_discrete(name = "Shot Distance") +
+  xlab("Participant") +
+  ylab("Release Height (m)") +
+  ggtitle("Ball Release Height Relative to\nAverage Close Shot Release Height") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r, echo=FALSE}
+# create the first plot
+p0 = ggplot(shot.data,
+            aes(x = velD_Z_release / ball_velocity_release_y * 100,
+                y = ball_velocity_release_y,
+                color = shotdistance)) +
+  geom_point() +
+  scale_color_discrete(name="Shot Distance") +
+  xlab("Contribution of CM Vv to Ball Vv at Release (%)") +
+  ylab("Ball Vv at Release (m/s)") +
+  ggtitle("Contribution of CM Vv to Ball Vv at Release\nfor All Participants at All Shot Distances") +
+  xlim(-5,35) +
+  ylim(3.5,8) +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text = element_text(size = 14),
+        axis.title = element_text(size = 14),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 14))
+# create second plot
+p1 = ggplot(data = subset(shot.data,
+                          Athlete_ID!=ath[1]),
+            mapping = aes(x = velD_Z_release / ball_velocity_release_y * 100,
+                          y = ball_velocity_release_y,
+                          color = shotdistance)) +
+  geom_point(alpha = 0.15,
+             color = "black") +
+  geom_point(data = subset(shot.data,
+                           Athlete_ID==ath[1]),
+             mapping = aes(x = velD_Z_release / ball_velocity_release_y * 100,
+                           y = ball_velocity_release_y,
+                           color = shotdistance,
+                           shape = '21')) +
+  geom_smooth(data = subset(shot.data,
+                            Athlete_ID==ath[1]),
+              method = "lm") +
+  geom_point(data = subset(shot.data,
+                           Athlete_ID==ath[4]),
+             mapping = aes(x = velD_Z_release / ball_velocity_release_y * 100,
+                           y = ball_velocity_release_y,
+                           color = shotdistance,
+                           shape = '16')) +
+  geom_smooth(data = subset(shot.data,
+                            Athlete_ID==ath[4]),
+              method = "lm") +
+  scale_color_discrete(name="Shot Distance") +
+  scale_shape_manual(name='Participant',
+                     labels=c('1','4'),
+                     values=c(21,16)) +
+  xlim(-5,35) +
+  ylim(3.5,8) +
+  xlab("Contribution of CM Vv to Ball Vv at Release (%)") +
+  ylab("Ball Vertical Velocity at Release (m/s)") +
+  ggtitle("Contribution of CM Vv to Ball Vv at Release\nfor Two Examplar Participants at All Shot Distances") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text = element_text(size = 14),
+        axis.title = element_text(size = 14),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 14))
+# arrange plot
+p = grid.arrange(p0, p1, nrow=1)
+# save plot
+ggsave('Figures\\BallvelCMveltwo.jpeg', plot = p, height = 6.75, width = 10.9)
+```
