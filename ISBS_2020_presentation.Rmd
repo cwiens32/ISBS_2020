@@ -1,0 +1,418 @@
+---
+title: "THE CONTRIBUTION OF BODY CENTER OF MASS VELOCITY TO BASKETBALL BALL RELEASE VELOCITY ACROSS SHOT DISTANCES"
+author: "Casey Wiens^1^ and Jill L. McNitt-Gray^1,2^  \nDepartments of Biological Sciences^1^ and Biomedical Engineering^2^  \nUniversity of Southern California  \nLos Angeles, United States of America"
+date: "6/19/2020"
+output:
+  powerpoint_presentation:
+    reference_doc: template.pptx
+---
+
+```{r setup, include=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+# initialize libraries
+library(tidyverse)
+library(readxl)
+library(DBI)
+library(RSQLite)
+library(gridExtra)
+library(png)
+library(grid)
+source("C:\\Users\\cwiens\\Documents\\R\\Rallfun-v36")
+```
+
+```{r loaddata}
+# create connection and load tables
+conISBS <- dbConnect(SQLite(), "ISBS2020_Database.sqlite")
+shot.data = dbReadTable(conISBS, 'shot.data')
+dbDisconnect(conISBS)
+
+# create athlete variable
+ath = sort(unique(shot.data$Athlete_ID))
+# set proper order of shot distance
+shot.data$shotdistance <- factor(shot.data$shotdistance,
+                                 levels = c("close", "medium", "long"))
+
+# load percent contribution images
+percon_s = rasterGrob(readPNG("images/percont_small.png"))
+percon_l = rasterGrob(readPNG("images/percont_large.png"))
+```
+
+## Mechanical Objectives of a Basketball Shot
+
+::::::::: {.columns}
+::: {.column}
+- Determinants of Success
+  - More than one trajectory can result in success from same ball position  
+
+- Ball velocity at release is determined by (Hay, 1978):
+  - Body center of mass velocity
+  - Velocity of ball relative to the body center of mass
+    - Contributed to the arms  
+
+- Center of mass vertical velocity at release increases with increase in shot distance
+  - Miller and Bartlett, 1993
+  - Okazaki and Rodacki, 2012
+:::
+::: {.column}
+![](images/mechanicalobjective.png)
+:::
+::::::::::::::
+
+
+# Does the Increase in Center of Mass Velocity at Release Reduce the Arm's Contribution to Ball Velocity?
+
+
+## Contributions of CM Velocity to Ball Velocity at Release Across Shot Distances
+::::::::: {.columns}
+::: {.column}
+### Hypothesis
+
+The greater the CM velocity at release, the greater % contribution of the CM velocity to ball velocity at release
+:::
+::: {.column}
+![](images/hypothesis_2.PNG)
+:::
+::::::::::::::
+
+
+## In the Gym Data Collection
+
+::::::::: {.columns}
+::: {.column}
+**Participants**  
+
+- 7 recreational players
+  - 4 female
+  - College aged
+
+**Basketball Shot at Game Pace**  
+
+- 10 attempts from each distance  
+  - ~ Static position on plates
+  - Received pass from person under hoop  
+
+
+**Motion Capture**  
+
+- Ball motion  
+  - Panasonic, 120Hz
+
+**Force-Time Characteristics**  
+
+- Net Impulse = Change in Momentum  
+  - CM Velocity at Release
+  - Kistler, 1200Hz
+:::
+::: {.column}
+![](images/bballoverlay_withlines.png)
+:::
+::::::::::::::
+
+
+## Ball Velocity at Release Determined by Flight Time and Ball Displacement
+![](images/releasevelocitycalc.png)
+
+
+## Results: *If You Have It, You Use It*
+::::::::: {.columns}
+::: {.column}
+- With greater shot distance, a greater ball velocity at release is needed  
+- Having a greater CM velocity at release increases its contribution to ball velocity at release  
+  - This reduces the contribution required from the arms
+  - This was consistent across all participants
+:::
+::: {.column}
+```{r pervel, fig.width=6}
+# set layout for figure
+lay <- rbind(c(2,1),
+             c(3,1),
+             c(NA,1))
+# plot data
+p <- ggplot(shot.data) +
+  geom_point(aes(x = velD_Z_release,
+                 y = velD_Z_release / ball_velocity_release_y * 100,
+                 color = shotdistance,
+                 fill = "Vertical"),
+             shape = 21) +
+  geom_point(aes(x = velD_Y_release,
+                 y = velD_Y_release / ball_velocity_release_x * 100,
+                 color = shotdistance,
+                 fill = "Horizontal"),
+           shape = 16) +
+  xlab("CM Velocity at Release (m/s)") +
+  ylab("Contribution of CM Velocity\nto Ball Velocity at Release (%)") +
+  scale_fill_manual(name = "Velocity Component",
+                   values = c("black","white"),
+                   guide = guide_legend(override.aes = list(shape = c(16, 21),
+                                                            fill = c("black", "white")))) +
+  labs(color = "Shot Distance",
+       shape = "Component") +
+  geom_vline(xintercept = 0) +
+  geom_hline(yintercept = 0) +
+  ggtitle("Contribution of CM Velocity\nto Ball Velocity at Release") +
+  theme(plot.title = element_text(hjust = 0.5, size = 14),
+        axis.text = element_text(size = 14),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 14),
+        legend.position = "bottom",
+        legend.box = "vertical",
+        legend.margin = margin())
+grid.arrange(p, percon_l, percon_s, layout_matrix=lay,widths=c(0.2,1))
+```
+:::
+::::::::::::::
+
+
+# How Can You Achieve a Greater CM Velocity at Release?
+
+
+## Greater Net Impulse during Shot Prep Affords Greater Potential for CM Velocity at Release
+::::::::: {.columns}
+::: {.column}
+```{r, echo=FALSE, fig.width=6}
+# set layout for figure
+lay <- rbind(c(2,1),
+             c(3,1),
+             c(NA,1))
+# plot data
+p <- ggplot(shot.data,
+       aes(x = imp_Y / (BW/9.81),
+           y = velD_Y_release / ball_velocity_release_x * 100,
+           group = shotdistance,
+           color = shotdistance)) +
+  geom_point() +
+  scale_color_discrete(name = "Shot Distance") +
+  xlab("Net Horizontal Impulse (Ns/kg)") +
+  ylab("Contribution of CM Vh\nto Ball Vh at Release (%)") + 
+  ggtitle("Horizontal Impulse Generated during Shot Prep") +
+  geom_vline(xintercept = 0) +
+  geom_hline(yintercept = 0) +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text = element_text(size = 14),
+        axis.title = element_text(size = 14),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 14),
+        legend.position = "bottom",
+        legend.box = "vertical",
+        legend.margin = margin())
+grid.arrange(p, percon_l, percon_s, layout_matrix=lay,widths=c(0.2,1))
+```
+:::
+::: {.column}
+```{r, echo=FALSE, fig.width=6}
+# set layout for figure
+lay <- rbind(c(2,1),
+             c(3,1),
+             c(NA,1))
+# plot data
+p <- ggplot(shot.data,
+       aes(x = imp_Z / (BW/9.81),
+           y = velD_Z_release / ball_velocity_release_y * 100,
+           group = shotdistance,
+           color = shotdistance)) +
+  geom_point() +
+  scale_color_discrete(name = "Shot Distance") +
+  xlab("Net Vertical Impulse (Ns/kg)") +
+  ylab("Contribution of CM Vv\nto Ball Vv at Release (%)") +
+  ggtitle("Vertical Impulse Generated during Shot Prep") +
+  geom_vline(xintercept = 0) +
+  geom_hline(yintercept = 0) +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text = element_text(size = 14),
+        axis.title = element_text(size = 14),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 14),
+        legend.position = "bottom",
+        legend.box = "vertical",
+        legend.margin = margin())
+grid.arrange(p, percon_l, percon_s, layout_matrix=lay,widths=c(0.2,1))
+```
+:::
+::::::::::::::
+
+
+## Ball Release Relative to the CM Apex Trajectory
+::::::::: {.columns}
+::: {.column}
+![](images/time2cmapex.png)
+:::
+::: {.column}
+```{r time2apex, fig.width=6}
+# set layout for figure
+lay <- rbind(c(2,1),
+             c(3,1),
+             c(NA,1))
+# add time to center of mass apex
+shot.data$time_release2cmapex = (0 - shot.data$velD_Z_release) / -9.81
+shot.data$time_halfjump = (0 - shot.data$velD_Z) / -9.81
+
+#plot data
+p <- ggplot(shot.data,
+       aes(x = -time_release2cmapex, 
+           y = velD_Z_release / ball_velocity_release_y * 100,
+           group = shotdistance,
+           color = shotdistance)) +
+  geom_point() +
+  scale_color_discrete(name = "Shot Distance") +
+  xlim(-0.25,0.025) +
+  ylim(-5,35) +
+  xlab("Time of Ball Release from CM Apex (s)") +
+  ylab("Contribution of CM\nVv to Ball Vv at Release (%)") +
+  ggtitle("Time to CM Apex") + 
+  geom_vline(xintercept = 0) +
+  geom_hline(yintercept = 0) +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text = element_text(size = 14),
+        axis.title = element_text(size = 14),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 14),
+        legend.position = "bottom",
+        legend.box = "vertical",
+        legend.margin = margin())
+grid.arrange(p, percon_l, percon_s, layout_matrix=lay,widths=c(0.2,1))
+```
+:::
+::::::::::::::
+
+
+## Ball Release Relative to the CM Apex Trajectory
+::::::::: {.columns}
+::: {.column}
+![](images/time2cmapex.png)
+:::
+::: {.column}
+```{r time2apex2, fig.width=6}
+# set layout for figure
+lay <- rbind(c(2,1),
+             c(3,1),
+             c(NA,1))
+# add time to center of mass apex
+shot.data$time_release2cmapex = (0 - shot.data$velD_Z_release) / -9.81
+shot.data$time_halfjump = (0 - shot.data$velD_Z) / -9.81
+
+#plot data
+p <- ggplot(shot.data,
+       aes(x = -time_release2cmapex, 
+           y = velD_Z_release / ball_velocity_release_y * 100,
+           group = shotdistance,
+           color = shotdistance)) +
+  geom_point() +
+  scale_color_discrete(name = "Shot Distance") +
+  xlim(-0.25,0.025) +
+  ylim(-5,35) +
+  xlab("Time of Ball Release from CM Apex (s)") +
+  ylab("Contribution of CM\nVv to Ball Vv at Release (%)") +
+  ggtitle("Time to CM Apex") + 
+  geom_vline(xintercept = 0) +
+  geom_hline(yintercept = 0) +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text = element_text(size = 14),
+        axis.title = element_text(size = 14),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 14),
+        legend.position = "bottom",
+        legend.box = "vertical",
+        legend.margin = margin())
+grid.arrange(p, percon_l, percon_s, layout_matrix=lay,widths=c(0.2,1))
+```
+:::
+::::::::::::::
+
+
+## Using Time of Release Relative to End of Impulse Generation Is Less Clear
+::::::::: {.columns}
+::: {.column}
+![](images/samecmcontdifftime_banner.png)
+:::
+::: {.column}
+```{r, echo=FALSE, fig.width=6}
+# set layout for figure
+lay <- rbind(c(2,1),
+             c(3,1),
+             c(NA,1))
+#plot data
+p <- ggplot(shot.data,
+       aes(x = time_endimpulse2release, 
+           y = velD_Z_release / ball_velocity_release_y * 100,
+           group = shotdistance,
+           color = shotdistance)) +
+  geom_point() +
+  scale_color_discrete(name = "Shot Distance") +
+  ylim(-5,35) +
+  xlab("Time from End of Impulse Generation\nto Ball Release (s)") +
+  ylab("Contribution of CM Vv\nto Ball Vv at Release (%)") +
+  ggtitle("Time from End of Impulse Generation") + 
+  geom_vline(xintercept = 0) +
+  geom_hline(yintercept = 0) +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text = element_text(size = 14),
+        axis.title = element_text(size = 14),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 14),
+        legend.position = "bottom",
+        legend.box = "vertical",
+        legend.margin = margin())
+grid.arrange(p, percon_l, percon_s, layout_matrix=lay,widths=c(0.2,1))
+```
+:::
+::::::::::::::
+
+
+## Using Time of Release Relative to End of Impulse Generation Is Less Clear
+::::::::: {.columns}
+::: {.column}
+![](images/samecmcontdifftime_banner.png)
+:::
+::: {.column}
+```{r, echo=FALSE, fig.width=6}
+# set layout for figure
+lay <- rbind(c(2,1),
+             c(3,1),
+             c(NA,1))
+#plot data
+p <- ggplot(shot.data,
+       aes(x = time_endimpulse2release, 
+           y = velD_Z_release / ball_velocity_release_y * 100,
+           group = shotdistance,
+           color = shotdistance)) +
+  geom_point() +
+  scale_color_discrete(name = "Shot Distance") +
+  ylim(-5,35) +
+  xlab("Time from End of Impulse Generation\nto Ball Release (s)") +
+  ylab("Contribution of CM Vv\nto Ball Vv at Release (%)") +
+  ggtitle("Time from End of Impulse Generation") + 
+  geom_vline(xintercept = 0) +
+  geom_hline(yintercept = 0) +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text = element_text(size = 14),
+        axis.title = element_text(size = 14),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 14),
+        legend.position = "bottom",
+        legend.box = "vertical",
+        legend.margin = margin())
+grid.arrange(p, percon_l, percon_s, layout_matrix=lay,widths=c(0.2,1))
+```
+:::
+::::::::::::::
+
+
+## A Greater CM Velocity at Release Reduces the Contribution of the Arms to Ball Velocity
+
+- The greater the CM velocity at release, the greater % contribution of the CM velocity to ball velocity at release  
+  - Arm contribution decreased  
+- As CM vertical velocity contribution to ball vertical velocity increased:  
+  - Ball was released earlier relative to apex of body CM trajectory  
+- To increase CM velocity *potentially available* at release:
+  - Increase impulse generated during shot preparation phase  
+- Future directions
+  - Increase sample size
+  - Increase range of shooting skill level
+  - Within-participant analysis
+  - CM trajectory contributions to shooting accuracy
+  - Effects of shooting while defended
+
+
+## Acknowledgements
+
+![](images/acknowledgement.png)
