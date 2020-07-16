@@ -15,17 +15,12 @@ library(ggplot2)
 library(DBI)
 library(RSQLite)
 library(gridExtra)
-source("C:\\Users\\cwiens\\Documents\\R\\Rallfun-v36")
+source("Rallfun-v36")
 ```
 
 ```{r, include=FALSE}
-# identify parent folder with all athlete results folder
-folderCurrent = "C:\\Users\\cwiens\\Box Sync\\USC - Biomechanics Lab\\Conferences\\ISBS2020\\"
-# set working directory
-setwd(folderCurrent)
-
 # create connection and load tables
-conISBS <- dbConnect(SQLite(), "C:\\Users\\cwiens\\Box Sync\\USC - Biomechanics Lab\\Basketball\\ISBS2020_Database.sqlite")
+conISBS <- dbConnect(SQLite(), "../data/ISBS2020_Database.sqlite")
 shot.data = dbReadTable(conISBS, 'shot.data')
 dbDisconnect(conISBS)
 
@@ -286,7 +281,7 @@ ggplot(shot.data,
         axis.title = element_text(size = 14),
         legend.title = element_text(size = 14),
         legend.text = element_text(size = 14))
-ggsave('Figures\\PercentfromCM.jpeg')
+ggsave('../figures/PercentfromCM.jpeg')
 ```
 
 
@@ -452,7 +447,7 @@ ggplot(shot.data,
         legend.title = element_text(size = 14),
         legend.text = element_text(size = 14))
 # save plot
-ggsave('Figures\\time2apex.jpeg')
+ggsave('../figures/time2apex.jpeg')
 ```
 
 
@@ -562,5 +557,5 @@ p1 = ggplot(data = subset(shot.data,
 # arrange plot
 p = grid.arrange(p0, p1, nrow=1)
 # save plot
-ggsave('Figures\\BallvelCMveltwo.jpeg', plot = p, height = 6.75, width = 10.9)
+ggsave('../figures/BallvelCMveltwo.jpeg', plot = p, height = 6.75, width = 10.9)
 ```
